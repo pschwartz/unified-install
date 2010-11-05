@@ -13,7 +13,7 @@ except ImportError:
 
 class ManifestImporter:
     def __init__(self, distribution="ubuntu", release="10.04", 
-                 host="progmad.com", ssl=False, 
+                 host="github.com/piken/unified-install/raw/master/src", ssl=False, 
                  global_manifest="manifest.global"):
         self.distribution = distribution
         self.release = release
@@ -64,7 +64,7 @@ class ManifestImporterError(Exception):
             return message
         
 def main():
-    mi = ManifestImporter()
+    mi = ManifestImporter(ssl=True)
     manifest = mi.ManifestImport()
     for i in manifest["dependencies"]["PckMgr"]:
         print i,manifest["dependencies"]["PckMgr"][i]
