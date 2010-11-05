@@ -1,0 +1,28 @@
+This is an experimental Unified Installer for Nova. 
+
+This is targeted at the Bexar release and will come standard with support for 
+Centos 5.5, RHEL 5.5, and Ubuntu 10.04/10.10. 
+
+The package dependencies, install flow, configuration flow, and distribution
+specific commands are read from a manifest file that is formated JSON.
+
+The global manifest file named "manifest.global" lists the supported 
+distributions and releases along with providing a base file name for the
+distribution specific manifests "manifest.<distribution>.<release>"
+
+Inital manifest.global
+
+{
+	"ubuntu":{
+		"release":["10.04","10.10"],
+		"manifest":"manifest.ubuntu."
+		},
+	"centos":{
+		"release":["5.5"],
+		"manifest":"manifest.centos."
+		},
+	"rhel":{
+		"release":["5.5"],
+		"manifest":"manifest.rhel."
+		}
+} 
