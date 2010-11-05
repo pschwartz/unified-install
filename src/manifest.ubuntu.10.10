@@ -1,0 +1,24 @@
+{
+	"distroPckMgr":"os",
+	"novaUrl":"lp:nova",
+	"repositories":[
+			"ppa:nova-core/ppa"
+		],
+	"dependencies":{
+		"PckMgr":{
+			"1":["python-software-properties"],
+			"2":["dnsmasq","open-iscsi","kpartx","kvm","gawk","iptables","ebtables"],
+			"3":["user-mode-linux","kvm","libvirt-bin"],
+			"4":["screen","iscsitarget","euca2ools","vlan","curl","rabbitmq-server"],
+			"5":["python-twisted","python-sqlalchemy","python-mox","python-greenlet","python-carrot"],
+			"6":["python-daemon","python-eventlet","python-gflags","python-tornado","python-ipy"],
+			"7":["python-libvirt","python-libxml2","python-routes"],
+			"8":["mysql-server","python-mysqldb"]
+			},
+		"easy-install-2.6":[],
+		"build":[]
+		},
+	"config-steps":{
+		"3":["modprobe kvm; /etc/init.d/libvirt-bin restart"]
+	}
+}

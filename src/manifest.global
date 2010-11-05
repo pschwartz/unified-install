@@ -1,0 +1,14 @@
+{
+	"ubuntu":{
+		"release":["10.04","10.10"],
+		"manifest":"manifest.ubuntu."
+		},
+	"centos":{
+		"release":["5.5"],
+		"manifest":"manifest.centos."
+		},
+	"rhel":{
+		"release":["5.5"],
+		"manifest":"manifest.rhel."
+		}
+}
