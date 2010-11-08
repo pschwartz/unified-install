@@ -197,7 +197,7 @@ class OptionParser(object):
     
     def parse_config_file(self,path):
         config = {}
-        execfile(path, config, config)
+        execfile(path,config,config)
         for name in config:
             if name in self.options:
                 self.options[name].set(config[name])
@@ -239,7 +239,7 @@ class OptionParser(object):
 
 class ManifestImporter:
     def __init__(self, distribution="ubuntu", release="10.04", 
-                 host="https://github.com/piken/unified-install/raw/master/src", 
+                 host="https://localhost", 
                  global_manifest="manifest.global"):
         self.distribution = distribution
         self.release = release
@@ -288,8 +288,10 @@ class ManifestImporterError(Exception):
             return message
         
 def main():
+    if (os.path.isfile("config")):
+        opt.parse_config_file("config")
     opt.parse_command_line()
-    mi = ManifestImporter()
+    mi = ManifestImporter(host=opt.options['manifest_host'].value())
     manifest = mi.ManifestImport()
     for i in manifest["dependencies"]["PckMgr"]:
         logging.info("%s %s" % (i,manifest["dependencies"]["PckMgr"][i]))
@@ -302,29 +304,29 @@ if __name__ == '__main__':
     opt.option("logging", default="info",
                help=("Set the Python log level."),
                metavar="info|warning|error")
-    opt.option("with-mysql", type=bool, help="Use MySQL with Nova")
-    opt.option("with-mysql-host", default="localhost", type=str, 
+    opt.option("with_mysql", type=bool, help="Use MySQL with Nova")
+    opt.option("with_mysql_host", default="localhost", type=str, 
                help="Set the MySQL Hostname - Default:localhost",
                metavar="hostname")
-    opt.option("with-mysql-user", default="nova", type=str, 
+    opt.option("with_mysql_user", default="nova", type=str, 
                help="Set the MySQL Username - Default:nova",
                metavar="username")
-    opt.option("with-mysql-password", default="nova" ,type=str, 
+    opt.option("with_mysql_password", default="nova" ,type=str, 
                help="Set the MySQL Password - Default:nova",
                metavar="password")
-    opt.option("network-interface", default="eth0",type=str, 
+    opt.option("network_interface", default="eth0",type=str, 
                help="Set the Network Interface - Deafult:eth0",
                metavar="interface")
-    opt.option("with-ldap",type=bool, help="Use LDAP Authentication")
-    opt.option("use-branch", default="lp:nova", type=str, 
+    opt.option("with_ldap",type=bool, help="Use LDAP Authentication")
+    opt.option("use_branch", default="lp:nova", type=str, 
                help="Set a Nova Branch to use - Deafult: lp:nova",
                metavar="branch")
-    opt.option("manifest-host", 
+    opt.option("manifest_host", 
                default="https://github.com/piken/unified-install/raw/master/src",
                type=str, help="Set host for manifest retrieval",
                metavar="host")
-    opt.option("libvirt-type", default="qemu", type=str, 
+    opt.option("libvirt_type", default="qemu", type=str, 
                help="Set libvirt-type to use - Default:qemu",
                metavar="qemu|xen|uml")
-    opt.option("test-install",type=bool, help="Run tests after install")
+    opt.option("test_install",type=bool, help="Run tests after install")
     main()
