@@ -62,8 +62,23 @@ class ManifestImporterError(Exception):
             return message + " ("+ (self.log_message % self.args) +")"
         else:
             return message
+
+def usage():
+    print "nova-install [options] [distribution:release]"
+    print "Options:"
+    print "    --with-mysql                                        - Use MySQL with Nova"
+    print "    --mysql-user=[username] - Default: nova             - Set the MySQL Username"
+    print "    --mysql-password=[password] - Default: nova         - Set the MySQL Password"
+    print "    --network-interface=[interface] - Default: eth0     - Set the Network Interface" 
+    print "    --with-ldap                                         - Use LDAP Authentication"
+    print "    --branch=[branch]                                   - Set a Launchpad Nova Branch to use" 
+    print "    --manifest-host=[host]                              - Set host name to retrieve manifests from"
+    print "    --libvirt-type=[type] - Default: qemu               - Set libvirt-type to use"
+    print "    --test-install                                      - Run tests after install"
+
         
 def main():
+    usage()
     mi = ManifestImporter(ssl=True)
     manifest = mi.ManifestImport()
     for i in manifest["dependencies"]["PckMgr"]:
