@@ -122,8 +122,12 @@ class OptionParser(object):
                 record.message = "Bad message (%r): %r" % (e, record.__dict__)
             record.asctime = time.strftime(
                     "%y-%m-%d %H:%M:%S", self.converter(record.created))
-            prefix = '[%(asctime)s %(module)s]' % \
+            if record.__dict__['levelname'] == "ERROR":
+                prefix = '[%(asctime)s %(module)s (%(lineno)d)]' % \
                     record.__dict__
+            else:
+                prefix = '[%(asctime)s %(module)s]' % \
+                    record.__dict__  
             if self._color:
                 prefix = (self._colors.get(record.levelno, self._normal) +
                               prefix + self._normal)
@@ -248,7 +252,16 @@ class ManifestImporter:
         
     def __VerifyGlobalManifest(self, manifest):
         logging.info("Retrieving "+ self.host+manifest)
-        self.global_manifest = json.load(urllib2.urlopen(self.host+manifest))
+        try:
+            manifest = urllib2.urlopen(self.host+manifest)
+            self.global_manifest = json.load(manifest)
+        except urllib2.HTTPError,e:
+            logging.error(Error(e.code))
+            exit(e.code)
+        except ImportError:
+            logging.error(Error(200, 
+                    "%s import attempt failed.", self.distro_manifest))
+            exit(200)
         if self.distribution in self.global_manifest:
             distro = self.global_manifest[self.distribution]
             if self.release in distro["release"]:
@@ -256,32 +269,82 @@ class ManifestImporter:
                 
     def ManifestImport(self):
         if not self.distro_manifest:
-            print ManifestImporterError(100)
+            logging.error(Error(100))
             exit(100)
         try:
             manifest = urllib2.urlopen(self.host+self.distro_manifest)
             return json.load(manifest)
+        except urllib2.HTTPError,e:
+            logging.error(Error(e.code))
+            exit(e.code)
         except ImportError:
-            print ManifestImporterError(200, "%s import attempt failed.", self.distro_manifest)
+            logging.error(Error(200, 
+                    "%s import attempt failed.", self.distro_manifest))
             exit(200)
 
-class ManifestImporterError(Exception):
+class Error(Exception):
     errors = {
-              "100":"Distribution manifest not defined.",
-              "200":"ManifestError. Manifest does not exist.",
-              "300":"VersionError. Release version does not exist.",
+        "100":{
+               "type":"ManifestImport",
+               "error":"Distribution manifest not defined."
+              },
+        "200":{"type":"ManifestImport",
+               "error":"ManifestError. Manifest does not exist."
+              },
+        "300":{
+               "type":"ManifestImport",
+               "error":"VersionError. Release version does not exist."
+              },
+        "404":{
+               "type":"Urllib2",
+               "error":"HTTPError. URL Not Found on Server."
+              },
+        "400":{
+               "type":"Urllib2",
+               "error":"Bad Request. Bad request syntax or unsupported method"
+              }, 
+        "401":{
+               "type":"Urllib2",
+               "error":"Unauthorized. No permission -- see authorization schemes"
+              }, 
+        "403":{
+               "type":"Urllib2",
+               "error":"Forbidden. Request forbidden -- authorization will not help"
+              }, 
+        "404":{
+               "type":"Urllib2",
+               "error":"Not Found. Nothing matches the given URI"
+              }, 
+        "408":{
+               "type":"Urllib2",
+               "error":"Request Timeout. Request timed out; try again later."
+              }, 
+        "410":{
+               "type":"Urllib2",
+               "error":"Gone. URI no longer exists and has been permanently removed."
+              }, 
+        "500":{
+               "type":"Urllib2",
+               "error":"Internal Server Error. Server got itself in trouble"
+              }, 
+        "503":{
+               "type":"Urllib2",
+               "error":"Service Unavailable. The server cannot process the request due to a high load"
+              }, 
         }  
     def __init__(self, status_code, log_message=None, *args):
+        self.type = type
         self.status_code = status_code
         self.log_message = log_message
         self.args = args
         
     def __str__(self):
         if `self.status_code` in self.errors:
-            curr_error = self.errors[`self.status_code`]
+            curr_type = self.errors[`self.status_code`]['type']
+            curr_error = self.errors[`self.status_code`]['error']
         else:
             curr_error = "Unknown Error"
-        message = "DistroImporter %d: %s" % (self.status_code,curr_error)
+        message = "%s %d: %s" % (curr_type, self.status_code,curr_error)
         if self.log_message:
             return message + " ("+ (self.log_message % self.args) +")"
         else:
@@ -291,7 +354,7 @@ def main():
     if (os.path.isfile("config")):
         opt.parse_config_file("config")
     opt.parse_command_line()
-    mi = ManifestImporter(host=opt.options['manifest_host'].value())
+    mi = ManifestImporter(host=opt.options.manifest_host)
     manifest = mi.ManifestImport()
     for i in manifest["dependencies"]["PckMgr"]:
         logging.info("%s %s" % (i,manifest["dependencies"]["PckMgr"][i]))
