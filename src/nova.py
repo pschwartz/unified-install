@@ -123,10 +123,10 @@ class OptionParser(object):
             record.asctime = time.strftime(
                     "%y-%m-%d %H:%M:%S", self.converter(record.created))
             if record.__dict__['levelname'] == "ERROR":
-                prefix = '[%(asctime)s %(module)s (%(lineno)d)]' % \
+                prefix = '[%(levelname)s %(asctime)s %(module)s (%(lineno)d)]' % \
                     record.__dict__
             else:
-                prefix = '[%(asctime)s %(module)s]' % \
+                prefix = '[%(levelname)s %(asctime)s %(module)s]' % \
                     record.__dict__  
             if self._color:
                 prefix = (self._colors.get(record.levelno, self._normal) +
@@ -242,8 +242,8 @@ class OptionParser(object):
         root_logger.addHandler(channel)
 
 class ManifestImporter:
-    def __init__(self, distribution="ubuntu", release="10.04", 
-                 host="https://localhost", 
+    def __init__(self, distribution="ubuntu", release="10.10", 
+                 host="http://localhost", 
                  global_manifest="manifest.global"):
         self.distribution = distribution
         self.release = release
@@ -251,7 +251,7 @@ class ManifestImporter:
         self.__VerifyGlobalManifest(manifest=global_manifest)
         
     def __VerifyGlobalManifest(self, manifest):
-        logging.info("Retrieving "+ self.host+manifest)
+        logging.debug("Retrieving "+ self.host+manifest)
         try:
             manifest = urllib2.urlopen(self.host+manifest)
             self.global_manifest = json.load(manifest)
@@ -277,6 +277,21 @@ class ManifestImporter:
         except urllib2.HTTPError,e:
             logging.error(Error(e.code))
             exit(e.code)
+        except ImportError:
+            logging.error(Error(200, 
+                    "%s import attempt failed.", self.distro_manifest))
+            exit(200)
+
+class DynamicImporter:
+    def __init__(self, distro_manifest):
+        self.disto_manifest = distro_manifest
+                
+    def DynamicImport(self):
+        if not self.distro_manifest:
+            logging.error(Error(100))
+            exit(100)
+        try:
+            __import__()
         except ImportError:
             logging.error(Error(200, 
                     "%s import attempt failed.", self.distro_manifest))
@@ -353,11 +368,16 @@ class Error(Exception):
 def main():
     if (os.path.isfile("config")):
         opt.parse_config_file("config")
+    opt.options.logging="debug"
     opt.parse_command_line()
     mi = ManifestImporter(host=opt.options.manifest_host)
     manifest = mi.ManifestImport()
-    for i in manifest["dependencies"]["PckMgr"]:
-        logging.info("%s %s" % (i,manifest["dependencies"]["PckMgr"][i]))
+    for i in range(1,len(manifest["dependencies"]["PckMgr"])+1):
+        if `i` in manifest['config-steps']['pre']:
+            logging.info("Config Step [PRE] %s: %s" % (i,manifest['config-steps']['pre'][`i`]))
+        logging.info("%s %s" % (i,manifest["dependencies"]["PckMgr"][`i`]))
+        if `i` in manifest['config-steps']['post']:
+            logging.info("Config Step [POST] %s: %s" % (i,manifest['config-steps']['post'][`i`]))
         
 
     
